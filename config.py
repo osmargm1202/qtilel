@@ -24,42 +24,71 @@ import os
 import subprocess
 from libqtile import hook
 
+
 # Add this function for monitor cycling
 def cycle_monitors():
-    script_path = os.path.expanduser('~/.config/qtile/monitor_cycle.py')
+    script_path = os.path.expanduser("~/.config/qtile/monitor_cycle.py")
     subprocess.call([script_path])
+    refresh_wallpapers()
+    
+def refresh_monitors():
+    subprocess.Popen(["xrandr", "--output", "HDMI-1", "--off", "--output", "eDP-1", "--auto"])
+    refresh_wallpapers()
 
+def refresh_wallpapers():
+    dir = "/home/osmar/Pictures"
+    import random
+    wallpapers = [os.path.join(dir, f) for f in os.listdir(dir) if f.endswith(('.jpg', '.png', '.jpeg'))]
+    wallpaper1 = random.choice(wallpapers)
+    wallpaper2 = random.choice(wallpapers)
+    while wallpaper2 == wallpaper1:  # Ensure different wallpapers
+        wallpaper2 = random.choice(wallpapers)
+    subprocess.Popen(
+        [
+            "dunstify",
+            "-u",
+            "normal",
+            "Wallpaper Configuration",
+            f"Using {wallpaper1} and {wallpaper2}",
+        ]
+    )
+    subprocess.Popen(["feh", "--bg-scale", wallpaper1, "--bg-scale", wallpaper2, "&"])
 
 @hook.subscribe.startup_once
 def autostart():
-    home = os.path.expanduser('~/.config/qtile/autostart.sh')
+    home = os.path.expanduser("~/.config/qtile/autostart.sh")
     subprocess.Popen([home])
 
 
 @hook.subscribe.client_new
 def client_new(client):
     if client.window.get_class() in ["steam", "discord", "dota2"]:
-        client.togroup("GAME")  
+        client.togroup("GAME")
 
     elif client.window.get_name() in ["whatsapp", "teams"]:
-        client.togroup("CHAT")  
+        client.togroup("CHAT")
 
     elif client.window.get_name() in ["gmail", "outlook"]:
-        client.togroup("MAIL") 
+        client.togroup("MAIL")
 
     elif client.window.get_class() in ["vscode", "cursor", "windsurf"]:
-        client.togroup("IDE")  
-        
+        client.togroup("IDE")
+
     elif client.window.get_class() in ["brave", "firefox"]:
-        client.togroup("WEB") 
+        client.togroup("WEB")
 
     elif client.window.get_name() in ["webui", "openai", "claude", "gemini", "gpt"]:
-        client.togroup("AI") 
-        
-    elif client.window.get_class() in ["blender", "krita", "gimp", "inkscape", "bricscad", "cad"]:
-        client.togroup("CAD") 
+        client.togroup("AI")
 
-
+    elif client.window.get_class() in [
+        "blender",
+        "krita",
+        "gimp",
+        "inkscape",
+        "bricscad",
+        "cad",
+    ]:
+        client.togroup("CAD")
 
 
 mod = "mod4"
@@ -74,34 +103,59 @@ keys = [
     Key([mod], "j", lazy.layout.down(), desc="Move focus down"),
     Key([mod], "k", lazy.layout.up(), desc="Move focus up"),
     Key([mod], "space", lazy.layout.next(), desc="Move window focus to other window"),
-
     Key([mod], "left", lazy.layout.left(), desc="Move focus to left"),
     Key([mod], "right", lazy.layout.right(), desc="Move focus to right"),
     Key([mod], "down", lazy.layout.down(), desc="Move focus down"),
     Key([mod], "up", lazy.layout.up(), desc="Move focus up"),
     # Move windows between left/right columns or move up/down in current stack.
     # Moving out of range in Columns layout will create new column.
-    Key([mod, "shift"], "h", lazy.layout.shuffle_left(), desc="Move window to the left"),
-    Key([mod, "shift"], "l", lazy.layout.shuffle_right(), desc="Move window to the right"),
+    Key(
+        [mod, "shift"], "h", lazy.layout.shuffle_left(), desc="Move window to the left"
+    ),
+    Key(
+        [mod, "shift"],
+        "l",
+        lazy.layout.shuffle_right(),
+        desc="Move window to the right",
+    ),
     Key([mod, "shift"], "j", lazy.layout.shuffle_down(), desc="Move window down"),
     Key([mod, "shift"], "k", lazy.layout.shuffle_up(), desc="Move window up"),
-    Key([mod, "shift"], "left", lazy.layout.shuffle_left(), desc="Move window to the left"),
-    Key([mod, "shift"], "right", lazy.layout.shuffle_right(), desc="Move window to the right"),
+    Key(
+        [mod, "shift"],
+        "left",
+        lazy.layout.shuffle_left(),
+        desc="Move window to the left",
+    ),
+    Key(
+        [mod, "shift"],
+        "right",
+        lazy.layout.shuffle_right(),
+        desc="Move window to the right",
+    ),
     Key([mod, "shift"], "down", lazy.layout.shuffle_down(), desc="Move window down"),
     Key([mod, "shift"], "up", lazy.layout.shuffle_up(), desc="Move window up"),
     # Grow windows. If current window is on the edge of screen and direction
     # will be to screen edge - window would shrink.
     Key([mod, "control"], "h", lazy.layout.grow_left(), desc="Grow window to the left"),
-    Key([mod, "control"], "l", lazy.layout.grow_right(), desc="Grow window to the right"),
+    Key(
+        [mod, "control"], "l", lazy.layout.grow_right(), desc="Grow window to the right"
+    ),
     Key([mod, "control"], "j", lazy.layout.grow_down(), desc="Grow window down"),
     Key([mod, "control"], "k", lazy.layout.grow_up(), desc="Grow window up"),
-
-    Key([mod, "control"], "left", lazy.layout.grow_left(), desc="Grow window to the left"),
-    Key([mod, "control"], "right", lazy.layout.grow_right(), desc="Grow window to the right"),
+    Key(
+        [mod, "control"],
+        "left",
+        lazy.layout.grow_left(),
+        desc="Grow window to the left",
+    ),
+    Key(
+        [mod, "control"],
+        "right",
+        lazy.layout.grow_right(),
+        desc="Grow window to the right",
+    ),
     Key([mod, "control"], "down", lazy.layout.grow_down(), desc="Grow window down"),
     Key([mod, "control"], "up", lazy.layout.grow_up(), desc="Grow window up"),
-
-
     Key([mod], "n", lazy.layout.normalize(), desc="Reset all window sizes"),
     # Toggle between split and unsplit sides of stack.
     # Split = all windows displayed
@@ -123,11 +177,15 @@ keys = [
         lazy.window.toggle_fullscreen(),
         desc="Toggle fullscreen on the focused window",
     ),
-    Key([mod], "t", lazy.window.toggle_floating(), desc="Toggle floating on the focused window"),
+    Key(
+        [mod],
+        "t",
+        lazy.window.toggle_floating(),
+        desc="Toggle floating on the focused window",
+    ),
     Key([mod, "control"], "r", lazy.reload_config(), desc="Reload the config"),
     Key([mod, "control"], "q", lazy.shutdown(), desc="Shutdown Qtile"),
     Key([mod], "r", lazy.spawncmd(), desc="Spawn a command using a prompt widget"),
-
     Key([mod], "m", lazy.spawn("rofi -show drun"), desc="Apps"),
     Key([mod], "w", lazy.spawn("brave"), desc="Web Browser"),
     Key([mod], "i", lazy.spawn("cursor"), desc="IDE"),
@@ -136,28 +194,64 @@ keys = [
     Key([mod], "c", lazy.spawn("gnome-calculator"), desc="Calculator"),
     Key([mod, "shift"], "d", lazy.spawn("discord"), desc="Discord"),
     Key([mod, "shift"], "s", lazy.spawn("steam"), desc="Steam"),
-    Key("","Print", lazy.spawn("flameshot gui"), desc="Screenshot tool"),
+    Key("", "Print", lazy.spawn("flameshot gui"), desc="Screenshot tool"),
     # Monitor switcher - Win+P
-    Key([mod], "p", lazy.function(lambda qtile: cycle_monitors()), desc="Cycle monitor configurations"),
+    Key(
+        [mod],
+        "p",
+        lazy.function(lambda qtile: cycle_monitors()),
+        desc="Cycle monitor configurations",
+    ),
+    Key([mod], "o", lazy.spawn(f"{terminal} -e orgm"), desc="Open orgm in terminal"),
     # Set specific monitor as primary
-    Key([], "XF86AudioRaiseVolume", lazy.spawn("pamixer --increase 5"), desc="Increase volume"),
-    Key([], "XF86AudioLowerVolume", lazy.spawn("pamixer --decrease 5"), desc="Decrease volume"),
-    Key([], "XF86AudioMute", lazy.spawn("pamixer --toggle-mute"), desc="Mute/unmute volume"),
+    Key(
+        [mod, "shift"],
+        "p",
+        lazy.function(lambda qtile: refresh_monitors()),
+        desc="Cycle monitor configurations",
+    ),
+    Key(
+        [mod, "shift"],
+        "w",
+        lazy.function(lambda qtile: refresh_wallpapers()),
+        desc="Cycle monitor configurations",
+    ),
+    Key([mod], "o", lazy.spawn(f"{terminal} -e orgm"), desc="Open orgm in terminal"),
+
+
+
+    Key([mod], "o", lazy.spawn(f"{terminal} -e orgm"), desc="Open orgm in terminal"),
+    
+    # Set specific monitor as primary
+    Key(
+        [],
+        "XF86AudioRaiseVolume",
+        lazy.spawn("pamixer --increase 5"),
+        desc="Increase volume",
+    ),
+    Key(
+        [],
+        "XF86AudioLowerVolume",
+        lazy.spawn("pamixer --decrease 5"),
+        desc="Decrease volume",
+    ),
+    Key(
+        [],
+        "XF86AudioMute",
+        lazy.spawn("pamixer --toggle-mute"),
+        desc="Mute/unmute volume",
+    ),
     # Change wallpaper randomly
     Key(
         [mod, "shift"],
         "f",
-        lazy.spawn("sh -c 'feh --bg-scale \"$(find ~/Pictures/wallpapers -type f | shuf -n 1)\"'"),
-        desc="Change wallpaper randomly"
+        lazy.spawn(
+            "sh -c 'feh --bg-scale \"$(find ~/Pictures/wallpapers -type f | shuf -n 1)\"'"
+        ),
+        desc="Change wallpaper randomly",
     ),
-
     # Suspend system
-    Key(
-        [mod, "shift"],
-        "l",
-        lazy.spawn("systemctl suspend"),
-        desc="Suspend system"
-    ),
+    Key([mod, "shift"], "l", lazy.spawn("systemctl suspend"), desc="Suspend system"),
 ]
 
 # Add key bindings to switch VTs in Wayland.
@@ -174,16 +268,18 @@ for vt in range(1, 8):
     )
 
 
-groups = [Group("IDE", layout='max'), 
-          Group("WEB", layout='columns'), 
-          Group("AI", layout='columns'), 
-          Group("CODE", layout='max'), 
-          Group("CAD", layout='max'), 
-          Group("DOC", layout='max'), 
-          Group("VIDEO", layout='max'), 
-          Group("CHAT", layout='max'), 
-          Group("MAIL", layout='matrix'), 
-          Group("GAME", layout='columns')]
+groups = [
+    Group("IDE", layout="max"),
+    Group("WEB", layout="columns"),
+    Group("AI", layout="columns"),
+    Group("CODE", layout="max"),
+    Group("CAD", layout="max"),
+    Group("DOC", layout="max"),
+    Group("VIDEO", layout="max"),
+    Group("CHAT", layout="max"),
+    Group("MAIL", layout="matrix"),
+    Group("GAME", layout="columns"),
+]
 
 # groups = [Group(i) for i in "1234567890"]
 
@@ -225,12 +321,13 @@ layouts = [
     layout.Columns(**layout_theme),
     layout.Max(margin=[15, 15, 15, 15]),
     # Try more layouts by unleashing below layouts.
-    layout.Stack(num_stacks=2, 
-                 margin=[10, 10, 10, 10], 
-                 border_width=2, 
-                 border_focus="#2040ff", 
-                 border_normal="#000000",
-                 ),
+    layout.Stack(
+        num_stacks=2,
+        margin=[10, 10, 10, 10],
+        border_width=2,
+        border_focus="#2040ff",
+        border_normal="#000000",
+    ),
     # layout.Bsp(),
     # layout.Matrix(),
     # layout.MonadTall(),
@@ -276,11 +373,11 @@ screens = [
                 # Monitor switcher widget
                 widget.TextBox(
                     text="🖥",
-                    foreground="#2280ff",
+                    foreground="#0080ff",
                     name="monitor_switcher",
-                    fontsize=16, 
+                    # fontsize=24,
                     mouse_callbacks={
-                        'Button1': lambda: cycle_monitors(),
+                        "Button1": lambda: cycle_monitors(),
                     },
                     padding=5,
                 ),
@@ -290,10 +387,10 @@ screens = [
                     format="NVME {HDDPercent}%",
                     padding=5,
                 ),
-#                widget.Memory(
-#                    # format="MEM {MemUsed} / {MemTotal}",
-#                    padding=5,
-#                ),
+                #                widget.Memory(
+                #                    # format="MEM {MemUsed} / {MemTotal}",
+                #                    padding=5,
+                #                ),
                 widget.KeyboardLayout(
                     format="{name}",
                     padding=5,
@@ -332,7 +429,7 @@ screens = [
                 # ),
                 widget.Systray(icon_size=24, padding=5),
                 widget.Clock(format="%I:%M %p %d-%b-%Y"),
-                widget.QuickExit(countdown_format='{}', default_text='[ Logout ]'),
+                widget.QuickExit(countdown_format="{}", default_text="[ Logout ]"),
             ],
             size=44,
             opacity=0.9,
@@ -350,8 +447,15 @@ screens = [
 
 # Drag floating layouts.
 mouse = [
-    Drag([mod], "Button1", lazy.window.set_position_floating(), start=lazy.window.get_position()),
-    Drag([mod], "Button3", lazy.window.set_size_floating(), start=lazy.window.get_size()),
+    Drag(
+        [mod],
+        "Button1",
+        lazy.window.set_position_floating(),
+        start=lazy.window.get_position(),
+    ),
+    Drag(
+        [mod], "Button3", lazy.window.set_size_floating(), start=lazy.window.get_size()
+    ),
     Click([mod], "Button2", lazy.window.bring_to_front()),
 ]
 
@@ -405,8 +509,3 @@ wl_xcursor_size = 24
 # java that happens to be on java's whitelist.
 
 wmname = "qtile"
-
-
-        
-        
-        
