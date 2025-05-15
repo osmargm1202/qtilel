@@ -379,7 +379,7 @@ def right_arrow(bg_color, fg_color):
 
 
 color1 = "#ff00ff"
-color2 = "#4040f0"
+color2 = "#2e66bf"
 color3 = "#0000ff"
 color4 = "#ffff00"
 # transparent = "#20202091"
