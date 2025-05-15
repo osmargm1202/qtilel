@@ -29,11 +29,11 @@ from libqtile import hook
 def cycle_monitors():
     script_path = os.path.expanduser("~/.config/qtile/monitor_cycle.py")
     subprocess.call([script_path])
-    refresh_wallpapers()
-    
+    # refresh_wallpapers()
+
 def refresh_monitors():
     subprocess.Popen(["xrandr", "--output", "HDMI-1", "--off", "--output", "eDP-1", "--auto"])
-    refresh_wallpapers()
+    # refresh_wallpapers()
 
 def refresh_wallpapers():
     dir = "/home/osmar/Pictures"
@@ -53,6 +53,9 @@ def refresh_wallpapers():
         ]
     )
     subprocess.Popen(["feh", "--bg-scale", wallpaper1, "--bg-scale", wallpaper2, "&"])
+
+def open_app(app):
+    subprocess.Popen([app])
 
 @hook.subscribe.startup_once
 def autostart():
@@ -202,27 +205,18 @@ keys = [
         lazy.function(lambda qtile: cycle_monitors()),
         desc="Cycle monitor configurations",
     ),
-    Key([mod], "o", lazy.spawn(f"{terminal} -e orgm"), desc="Open orgm in terminal"),
-    # Set specific monitor as primary
+
+
     Key(
         [mod, "shift"],
         "p",
         lazy.function(lambda qtile: refresh_monitors()),
         desc="Cycle monitor configurations",
     ),
-    Key(
-        [mod, "shift"],
-        "w",
-        lazy.function(lambda qtile: refresh_wallpapers()),
-        desc="Cycle monitor configurations",
-    ),
     Key([mod], "o", lazy.spawn(f"{terminal} -e orgm"), desc="Open orgm in terminal"),
 
 
 
-    Key([mod], "o", lazy.spawn(f"{terminal} -e orgm"), desc="Open orgm in terminal"),
-    
-    # Set specific monitor as primary
     Key(
         [],
         "XF86AudioRaiseVolume",
@@ -246,12 +240,20 @@ keys = [
         [mod, "shift"],
         "f",
         lazy.spawn(
-            "sh -c 'feh --bg-scale \"$(find ~/Pictures/wallpapers -type f | shuf -n 1)\"'"
+            "sh -c 'feh --bg-scale \"$(find ~/Pictures -type f | shuf -n 1)\" --bg-scale \"$(find ~/Pictures -type f | shuf -n 1)\"'"
         ),
         desc="Change wallpaper randomly",
     ),
     # Suspend system
     Key([mod, "shift"], "l", lazy.spawn("systemctl suspend"), desc="Suspend system"),
+    # Aumentar brillo
+    Key([], "XF86MonBrightnessUp", lazy.spawn("brightnessctl s +10%"), desc="Increase brightness"),
+    
+    # Disminuir brillo
+    Key([], "XF86MonBrightnessDown", lazy.spawn("brightnessctl s 10%-"), desc="Decrease brightness"),
+    
+
+
 ]
 
 # Add key bindings to switch VTs in Wayland.
@@ -346,34 +348,64 @@ widget_defaults = dict(
 )
 extension_defaults = widget_defaults.copy()
 
+
+def triangle_widget_left(fg_color, n=0):
+    arrow = ["◀", "▶", "▼", "▲"]
+    return {
+        # "background": fg_color,
+        "foreground": fg_color,
+        "padding": 0,
+        "margin":0,
+        "text": arrow[n],  # Triángulo relleno izquierda
+        "font": "JetBrainsMono Nerd Font", 
+        "fontsize": 80,
+    }
+
+def left_arrow(bg_color, fg_color):
+    return widget.TextBox(
+        text='\uE0B2',
+        padding=0,
+        fontsize=25,
+        background=bg_color,
+        foreground=fg_color)
+
+def right_arrow(bg_color, fg_color):
+    return widget.TextBox(
+        text='\uE0B0',
+        padding=0,
+        fontsize=25,
+        background=bg_color,
+        foreground=fg_color)
+
+
+color1 = "#ff00ff"
+color2 = "#4040f0"
+color3 = "#0000ff"
+color4 = "#ffff00"
+# transparent = "#20202091"
+color_gray = "#404040"
+color_white = "#ffffff"
+color_black = "#000000"
+transparent_black = "#00000000"
+
 screens = [
     Screen(
         top=bar.Bar(
             [
-                widget.GroupBox(),
+                widget.GroupBox(disable_drag=True),
+
                 widget.CurrentLayout(),
                 # widget.WindowName(),
-                widget.Prompt(),
-                # widget.Chord(
-                #     chords_colors={
-                #         "launch": ("#000000", "#ffffff"),
-                #     },
-                #     name_transform=lambda name: name.upper(),
-                # ),
-                widget.TaskList(
-                    format="{name}",
-                    fontsize=14,
-                    # foreground="#2280ff",
-                    # background="#000000",
-                    max_title_width=350,
-                    borderwidth=1,
-                    icon_size=12,
-                    padding=10,
+
+                widget.Spacer(
+                    expand=True,
                 ),
                 # Monitor switcher widget
+                left_arrow(color_black, color2),
                 widget.TextBox(
                     text="🖥",
-                    foreground="#0080ff",
+                    background=color2,
+                    foreground=color_white,
                     name="monitor_switcher",
                     # fontsize=24,
                     mouse_callbacks={
@@ -381,68 +413,123 @@ screens = [
                     },
                     padding=5,
                 ),
-                # Primary monitor selector widgets
+                left_arrow(color2, color_black),
+
                 widget.HDD(
                     device="nvme0n1",
                     format="NVME {HDDPercent}%",
                     padding=5,
                 ),
-                #                widget.Memory(
-                #                    # format="MEM {MemUsed} / {MemTotal}",
-                #                    padding=5,
-                #                ),
+                left_arrow(color_black, color2),
+                widget.Memory(
+                    # format="MEM {MemUsed} / {MemTotal}",
+                    background=color2,
+                    foreground=color_white,
+                    padding=5,
+                ),
+                left_arrow(color2, color_black),
                 widget.KeyboardLayout(
                     format="{name}",
                     padding=5,
                     foreground="#2280ff",
                     # background="#000000",
                 ),
-                # widget.CPU(
-                #     format="CPU {load_percent}%",
-                #     padding=5,
-                # ),
+                left_arrow(color_black, color2),
+                widget.CPU(
+                    format="CPU {load_percent}%",
+                    padding=5,
+                    background=color2,
+                    foreground=color_white,
+                ),
+                left_arrow(color2, color_black),
                 widget.ThermalZone(
                     format="TEMP {temp}°C",
                     padding=5,
                 ),
-                # widget.Spacer(
-                #     length=10,
-                # ),
+                left_arrow(color_black, color2),
+
                 # widget.Volume(
                 #     fmt="VOL: {}",
                 #     padding=5,
                 # ),
                 widget.Battery(
-                    # f+
+                    background=color2,
+                    foreground=color_white,
                     padding=5,
-                    foreground="#2280ff",
                     discharge_char="Power off",
                     charge_char="Power on",
                     charging_foreground="#2280ff",
                     discharging_foreground="#ff0000",
                     format="{char} {percent:2.0%} BATTERY TIME: {hour:d}:{min:02d}",
                 ),
+                # left_arrow(color_black, color2),
                 # widget.Backlight(
-                #     format="{state}",
+                #     # format="{state}",
                 #     padding=5,
                 #     foreground="#2280ff",
                 # ),
-                widget.Systray(icon_size=24, padding=5),
-                widget.Clock(format="%I:%M %p %d-%b-%Y"),
+                left_arrow(color2, color_black),
+                widget.Systray(icon_size=24, padding=10),
+                left_arrow(color_black, color2),
+                widget.Clock(format="%I:%M %p %d-%b-%Y", background=color2, foreground=color_white),
+                left_arrow(color2, color_black),
                 widget.QuickExit(countdown_format="{}", default_text="[ Logout ]"),
             ],
-            size=44,
-            opacity=0.9,
+            size=32,
+            # opacity=0.9,
             margin=[10, 10, 10, 10],
-            background="#20202091",
+            
+            # background=transparent_black,
             # border_width=[2, 0, 2, 0],  # Draw top and bottom borders
             # border_color=["ff00ff", "000000", "ff00ff", "000000"]  # Borders are magenta
+        ),
+        bottom=bar.Bar(
+            [
+                widget.TextBox(
+                    text="MENU",
+                    background=color2,
+                    foreground=color_white,
+                    name="menu",
+                    # fontsize=24,
+                    mouse_callbacks={
+                        "Button1": lambda: subprocess.Popen(["rofi", "-show", "drun"]),
+                    },
+                    padding=5,
+                ),
+                widget.Prompt(),
+                # widget.Spacer(
+                #     expand=True,
+                # ),
+                widget.TaskList(
+                    # format="{name}",
+                    # fontsize=14,
+                    expand=True,
+                    # foreground=color_white,
+                    # background=color2,
+                    # max_title_width=350,
+                    borderwidth=2,
+                    border=color2,  # Color del borde para ventanas activas
+                    unfocused_border=color_gray,  # Color del borde para ventanas inactivas
+                    highlight_method="border",  # Resaltar con borde
+                    rounded=False,  # Sin bordes redondeados
+                    margin=3,  # Margen entre tareas
+                    spacing=10,  # Espacio entre tareas
+                    icon_size=14,
+                    # padding=10,
+                ),
+
+            ],
+            size=32,
+            # opacity=0.9,
+            margin=[10, 10, 10, 10],
+            # background="#20202091",
         ),
         # You can uncomment this variable if you see that on X11 floating resize/moving is laggy
         # By default we handle these events delayed to already improve performance, however your system might still be struggling
         # This variable is set to None (no cap) by default, but you can set it to 60 to indicate that you limit it to 60 events per second
-        # x11_drag_polling_rate = 60,
+        x11_drag_polling_rate = 120,
     ),
+    Screen(),  # Segunda pantalla sin barras
 ]
 
 # Drag floating layouts.
@@ -496,8 +583,8 @@ auto_minimize = False
 wl_input_rules = None
 
 # xcursor theme (string or None) and size (integer) for Wayland backend
-wl_xcursor_theme = None
-wl_xcursor_size = 24
+wl_xcursor_theme = "Bibata-Modern-Amber"
+wl_xcursor_size = 24 
 
 # XXX: Gasp! We're lying here. In fact, nobody really uses or cares about this
 # string besides java UI toolkits; you can see several discussions on the

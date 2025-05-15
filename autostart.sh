@@ -12,4 +12,4 @@ feh --bg-scale ~/Pictures/wallpaper1.jpg --bg-scale ~/Pictures/wallpaper3.jpg &
 setxkbmap -layout "us,latam" -option "grp:alt_shift_toggle" &
 picom --config ~/.config/picom.conf &
 xautolock -time 5 -locker "i3lock -n -c 00000000" &
-brave-browser &                                                                                              
+# brave-browser &
